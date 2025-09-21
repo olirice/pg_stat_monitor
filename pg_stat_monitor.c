@@ -19,6 +19,8 @@
 #include "access/parallel.h"
 #include "nodes/pg_list.h"
 #include "utils/guc.h"
+#include "utils/builtins.h"
+#include "lib/stringinfo.h"
 #include "pgstat.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
@@ -3974,10 +3976,83 @@ pgsm_lock_release(pgsmSharedState *pgsm)
 static void
 pgsm_log_bucket_json(uint64 bucket_id)
 {
+	HASH_SEQ_STATUS hstat;
+	pgsmEntry  *entry;
+	StringInfoData json;
+	int			entry_count = 0;
+	pgsmSharedState *pgsm;
+
 	if (!pgsm_enable_json_log)
 		return;
 
-	/* Log a simple JSON message for bucket rotation */
-	elog(LOG, "[pg_stat_monitor] JSON export: {\"event\": \"bucket_rotation\", \"bucket_id\": %lu, \"timestamp\": \"%ld\"}",
-		 bucket_id, time(NULL));
+	/* Get shared state */
+	pgsm = pgsm_get_ss();
+
+	/* Initialize JSON output buffer */
+	initStringInfo(&json);
+	appendStringInfo(&json, "{\"event\": \"bucket_rotation\", \"bucket_id\": %lu, \"timestamp\": %ld, \"queries\": [",
+					 bucket_id, time(NULL));
+
+	/* Lock and iterate through hash entries */
+	pgsm_lock_aquire(pgsm, LW_SHARED);
+	pgsm_hash_seq_init(&hstat, get_pgsmHash(), false);
+
+	while ((entry = pgsm_hash_seq_next(&hstat)) != NULL)
+	{
+		Counters	tmp;
+
+		/* Only export entries from the rotating bucket */
+		if (entry->key.bucket_id != bucket_id)
+			continue;
+
+		/* Skip invalid buckets */
+		if (!IsBucketValid(entry->key.bucket_id))
+			continue;
+
+		/* Copy counters to local variable to keep locking time short */
+		{
+			volatile pgsmEntry *e = (volatile pgsmEntry *) entry;
+
+			SpinLockAcquire(&e->mutex);
+			tmp = e->counters;
+			SpinLockRelease(&e->mutex);
+		}
+
+		if (entry_count > 0)
+			appendStringInfo(&json, ",");
+
+		/* Export key query statistics as JSON */
+		appendStringInfo(&json,
+			"{\"userid\":%u,\"dbid\":%u,\"queryid\":%ld,\"calls\":%ld,"
+			"\"total_time\":%.3f,\"mean_time\":%.3f,\"rows\":%ld}",
+			entry->key.userid,
+			entry->key.dbid,
+			entry->key.queryid,
+			tmp.calls.calls,
+			tmp.time.total_time,
+			tmp.time.mean_time,
+			tmp.calls.rows);
+
+		entry_count++;
+	}
+
+	pgsm_hash_seq_term(&hstat);
+	pgsm_lock_release(pgsm);
+
+	/* Close JSON and log it */
+	appendStringInfo(&json, "], \"total_queries\": %d}", entry_count);
+
+	/* Log the JSON - split into chunks if needed due to log line limits */
+	if (json.len < 8000)  /* PostgreSQL log line limit is typically around 8KB */
+	{
+		elog(LOG, "[pg_stat_monitor] JSON export: %s", json.data);
+	}
+	else
+	{
+		/* Log that data was too large and just log summary */
+		elog(LOG, "[pg_stat_monitor] JSON export: {\"event\": \"bucket_rotation\", \"bucket_id\": %lu, \"total_queries\": %d, \"note\": \"Data too large for single log entry\"}",
+			 bucket_id, entry_count);
+	}
+
+	pfree(json.data);
 }
