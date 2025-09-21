@@ -492,6 +492,8 @@ extern bool pgsm_enable_pgsm_query_id;
 extern int	pgsm_track;
 extern bool pgsm_enable_json_log;
 
+/* Functions needed by JSON export module - simplified for now */
+
 #define DECLARE_HOOK(hook, ...) \
         static hook(__VA_ARGS__);
 #define HOOK(name) name

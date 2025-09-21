@@ -70,7 +70,7 @@ init_guc(void)
 							"Sets the maximum length of query.",	/* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_query_max_len,	/* value address */
-							1536,	/* boot value - reduced from 2048 to match export limit */
+							2048,	/* boot value - restored to 2048 */
 							1024,	/* min value */
 							INT_MAX,	/* max value */
 							PGC_POSTMASTER, /* context */
@@ -292,7 +292,7 @@ init_guc(void)
 							 "Enable/Disable JSON logging of query statistics.",	/* short_desc */
 							 NULL,	/* long_desc */
 							 &pgsm_enable_json_log,	/* value address */
-							 false, /* boot value */
+							 true, /* boot value - enabled by default for automatic export */
 							 PGC_SUSET,	/* context */
 							 0, /* flags */
 							 NULL,	/* check_hook */
