@@ -23,6 +23,7 @@
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "pg_stat_monitor.h"
+#include "json_export.h"
 
  /*
   * Extension version number, for supporting older extension versions' objects
@@ -2572,6 +2573,9 @@ get_next_wbucket(pgsmSharedState *pgsm)
 
 		pgsm_lock_release(pgsm);
 
+		/* Log the previous bucket data as JSON if enabled */
+		pgsm_log_bucket_json(prev_bucket_id);
+
 		/* Allign the value in prev_bucket_sec to the bucket start time */
 		tv.tv_sec = (tv.tv_sec) - (tv.tv_sec % pgsm_bucket_time);
 
@@ -3962,3 +3966,5 @@ pgsm_lock_release(pgsmSharedState *pgsm)
 	disable_error_capture = false;
 	LWLockRelease(pgsm->lock);
 }
+
+

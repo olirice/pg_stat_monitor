@@ -36,6 +36,7 @@ bool		pgsm_track_utility;
 bool		pgsm_track_application_names;
 bool		pgsm_enable_pgsm_query_id;
 int			pgsm_track;
+bool		pgsm_enable_json_log;
 static int	pgsm_overflow_target;	/* Not used since 2.0 */
 
 /* Check hooks to ensure histogram_min < histogram_max */
@@ -55,8 +56,8 @@ init_guc(void)
 							"Sets the maximum size of shared memory in (MB) used for statement's metadata tracked by pg_stat_monitor.", /* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_max,	/* value address */
-							256,	/* boot value */
-							10, /* min value */
+							3,	/* boot value */
+							3, /* min value */
 							10240,	/* max value */
 							PGC_POSTMASTER, /* context */
 							GUC_UNIT_MB,	/* flags */
@@ -83,7 +84,7 @@ init_guc(void)
 							"Sets the maximum number of buckets.",	/* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_max_buckets,	/* value address */
-							10, /* boot value */
+							2, /* boot value - reduced from 10 to 2 for low-memory fork */
 							1,	/* min value */
 							20000,	/* max value */
 							PGC_POSTMASTER, /* context */
@@ -149,12 +150,12 @@ init_guc(void)
 							NULL	/* show_hook */
 		);
 
-	DefineCustomIntVariable("pg_stat_monitor.pgsm_query_shared_buffer", /* name */
+	DefineCustomIntVariable("pg_stat_monitor.pgsm_kuery_shared_buffer", /* name */
 							"Sets the maximum size of shared memory in (MB) used for query tracked by pg_stat_monitor.",	/* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_query_shared_buffer,	/* value address */
-							20, /* boot value */
-							1,	/* min value */
+							3, /* boot value */
+							3,	/* min value */
 							10000,	/* max value */
 							PGC_POSTMASTER, /* context */
 							GUC_UNIT_MB,	/* flags */
@@ -281,6 +282,18 @@ init_guc(void)
 							 &pgsm_track_planning,	/* value address */
 							 false, /* boot value */
 							 PGC_USERSET,	/* context */
+							 0, /* flags */
+							 NULL,	/* check_hook */
+							 NULL,	/* assign_hook */
+							 NULL	/* show_hook */
+		);
+
+	DefineCustomBoolVariable("pg_stat_monitor.pgsm_enable_json_log", /* name */
+							 "Enable/Disable JSON logging of query statistics.",	/* short_desc */
+							 NULL,	/* long_desc */
+							 &pgsm_enable_json_log,	/* value address */
+							 true, /* boot value - enabled by default for automatic export */
+							 PGC_SUSET,	/* context */
 							 0, /* flags */
 							 NULL,	/* check_hook */
 							 NULL,	/* assign_hook */
