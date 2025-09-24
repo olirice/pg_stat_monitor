@@ -3966,5 +3966,3 @@ pgsm_lock_release(pgsmSharedState *pgsm)
 	disable_error_capture = false;
 	LWLockRelease(pgsm->lock);
 }
-
-
