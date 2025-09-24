@@ -84,7 +84,7 @@ init_guc(void)
 							"Sets the maximum number of buckets.",	/* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_max_buckets,	/* value address */
-							10,	/* boot value */
+							10, /* boot value */
 							1,	/* min value */
 							20000,	/* max value */
 							PGC_POSTMASTER, /* context */
@@ -154,8 +154,8 @@ init_guc(void)
 							"Sets the maximum size of shared memory in (MB) used for query tracked by pg_stat_monitor.",	/* short_desc */
 							NULL,	/* long_desc */
 							&pgsm_query_shared_buffer,	/* value address */
-							20,	/* boot value */
-							3,	/* min value */
+							20, /* boot value */
+							1,	/* min value */
 							10000,	/* max value */
 							PGC_POSTMASTER, /* context */
 							GUC_UNIT_MB,	/* flags */
