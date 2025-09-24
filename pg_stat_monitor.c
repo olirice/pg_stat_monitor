@@ -2568,13 +2568,14 @@ get_next_wbucket(pgsmSharedState *pgsm)
 		/* Update bucket id and retrieve the previous one. */
 		prev_bucket_id = pg_atomic_exchange_u64(&pgsm->current_wbucket, new_bucket_id);
 
+		/* Log the previous bucket data as JSON if enabled */
+		if (pgsm_enable_json_log)
+			pgsm_log_bucket_json(prev_bucket_id);
+
 		pgsm_lock_aquire(pgsm, LW_EXCLUSIVE);
 		hash_entry_dealloc(new_bucket_id, prev_bucket_id, NULL);
 
 		pgsm_lock_release(pgsm);
-
-		/* Log the previous bucket data as JSON if enabled */
-		pgsm_log_bucket_json(prev_bucket_id);
 
 		/* Allign the value in prev_bucket_sec to the bucket start time */
 		tv.tv_sec = (tv.tv_sec) - (tv.tv_sec % pgsm_bucket_time);
