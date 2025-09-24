@@ -3,6 +3,15 @@
  * json_export.h
  *	  JSON export functionality for pg_stat_monitor bucket data
  *
+ * Portions Copyright © 2018-2024, Percona LLC and/or its affiliates
+ *
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ *
+ * Portions Copyright (c) 1994, The Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  contrib/pg_stat_monitor/json_export.h
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -15,4 +24,4 @@
 /* Function to log bucket data as JSON */
 extern void pgsm_log_bucket_json(uint64 bucket_id);
 
-#endif /* JSON_EXPORT_H */
+#endif							/* JSON_EXPORT_H */
