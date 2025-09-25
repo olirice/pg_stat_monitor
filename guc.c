@@ -291,7 +291,7 @@ init_guc(void)
 	DefineCustomBoolVariable("pg_stat_monitor.pgsm_enable_json_log",	/* name */
 							 "Enable/Disable JSON logging of query statistics.",	/* short_desc */
 							 NULL,	/* long_desc */
-							 &pgsm_enable_json_log, /* value address */
+							 &pgsm_enable_json_log,	/* value address */
 							 false,	/* boot value */
 							 PGC_SUSET, /* context */
 							 0, /* flags */
