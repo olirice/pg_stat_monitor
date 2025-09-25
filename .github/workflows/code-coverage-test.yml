@@ -109,6 +109,7 @@ jobs:
           gcov -abcfu pg_stat_monitor.c
           gcov -abcfu guc.c
           gcov -abcfu hash_query.c
+          gcov -abcfu json_export.c
           sudo chmod -R ugo+rwx *.gcov*
         working-directory: src/pg_stat_monitor
 
@@ -118,7 +119,7 @@ jobs:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
           working-directory: ./src/pg_stat_monitor
-          files: ./pg_stat_monitor.c.gcov,./hash_query.c.gcov,./guc.c.gcov
+          files: ./pg_stat_monitor.c.gcov,./hash_query.c.gcov,./guc.c.gcov,./json_export.c.gcov
 
       - name: Change dir permissions on fail
         if: ${{ failure() }}

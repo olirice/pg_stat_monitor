@@ -490,6 +490,7 @@ extern bool pgsm_track_utility;
 extern bool pgsm_track_application_names;
 extern bool pgsm_enable_pgsm_query_id;
 extern int	pgsm_track;
+extern bool pgsm_enable_json_log;
 
 #define DECLARE_HOOK(hook, ...) \
         static hook(__VA_ARGS__);
