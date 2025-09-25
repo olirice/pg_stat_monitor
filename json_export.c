@@ -136,7 +136,6 @@ void pgsm_log_bucket_json(uint64 bucket_id) {
 	pgsmEntry *entry;
 	struct timeval start_time, end_time;
 	double duration_seconds;
-	time_t rotation_timestamp;
 	int query_count = 0;
 	int queries_exported = 0;
 	dsa_area *query_dsa_area = NULL;
@@ -146,7 +145,6 @@ void pgsm_log_bucket_json(uint64 bucket_id) {
 
 	/* Record start time and timestamp for duration calculation */
 	gettimeofday(&start_time, NULL);
-	rotation_timestamp = time(NULL);
 
 	/* Get shared state and DSA area for query text */
 	pgsm = pgsm_get_ss();
@@ -163,9 +161,9 @@ void pgsm_log_bucket_json(uint64 bucket_id) {
 	/* Log bucket rotation start with metadata */
 	elog(
 	    LOG,
-	    "[pg_stat_monitor] JSON export: {\"event\": \"bucket_rotation_start\", "
-	    "\"bucket_id\": %lu, \"timestamp\": %ld, \"query_count\": %d}",
-	    bucket_id, rotation_timestamp, query_count);
+	    "[pg_stat_monitor] {\"event\":\"bucket_rotation_start\","
+	    "\"bucket_id\":%lu,\"query_count\":%d}",
+	    bucket_id, query_count);
 
 	if (query_count > 0) {
 		/* Second pass: export each query as comprehensive JSON */
@@ -219,20 +217,18 @@ void pgsm_log_bucket_json(uint64 bucket_id) {
 				 * structure */
 				initStringInfo(&json);
 				appendStringInfo(&json,
-				                 "[pg_stat_monitor] JSON export: {"
+				                 "[pg_stat_monitor] {"
 				                 "\"event\":\"bucket_query\","
 				                 "\"bucket_id\":%lu,"
-				                 "\"timestamp\":%ld,"
 				                 "\"query_index\":%d,"
 				                 "\"query_count\":%d,"
 
 				                 /* Basic identification */
 				                 "\"bucket\":%lu,"
-				                 "\"bucket_start_time\":%ld,"
+				                 "\"bucket_start_time\":\"%s\","
 				                 "\"userid\":%u,",
-				                 bucket_id, rotation_timestamp,
-				                 queries_exported, query_count,
-				                 entry->key.bucket_id, (long)bucket_start_time,
+				                 bucket_id, queries_exported, query_count,
+				                 entry->key.bucket_id, timestamptz_to_str(bucket_start_time),
 				                 entry->key.userid);
 
 				/* Handle username with proper escaping */
@@ -442,8 +438,7 @@ void pgsm_log_bucket_json(uint64 bucket_id) {
 	                   (end_time.tv_usec - start_time.tv_usec) / 1000000.0;
 
 	elog(LOG,
-	     "[pg_stat_monitor] JSON export: {\"event\": \"bucket_rotation_end\", "
-	     "\"bucket_id\": %lu, \"timestamp\": %ld, \"duration_seconds\": %.3f, "
-	     "\"queries_exported\": %d}",
-	     bucket_id, rotation_timestamp, duration_seconds, queries_exported);
+	     "[pg_stat_monitor] {\"event\":\"bucket_rotation_end\","
+	     "\"bucket_id\":%lu,\"duration_seconds\":%.3f,\"queries_exported\":%d}",
+	     bucket_id, duration_seconds, queries_exported);
 }
