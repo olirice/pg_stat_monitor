@@ -23,6 +23,7 @@
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "pg_stat_monitor.h"
+#include "json_export.h"
 
  /*
   * Extension version number, for supporting older extension versions' objects
@@ -2566,6 +2567,10 @@ get_next_wbucket(pgsmSharedState *pgsm)
 
 		/* Update bucket id and retrieve the previous one. */
 		prev_bucket_id = pg_atomic_exchange_u64(&pgsm->current_wbucket, new_bucket_id);
+
+		/* Log the previous bucket data as JSON if enabled */
+		if (pgsm_enable_json_log)
+			pgsm_log_bucket_json(prev_bucket_id);
 
 		pgsm_lock_aquire(pgsm, LW_EXCLUSIVE);
 		hash_entry_dealloc(new_bucket_id, prev_bucket_id, NULL);
